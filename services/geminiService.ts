@@ -8,13 +8,13 @@ interface ContentIdea {
 }
 
 // Helper function to get the AI client.
-// This lazy-initializes the client and provides a clear error if the key is missing.
+// This should be called right before an API call to ensure the latest key is used.
 const getAiClient = () => {
-    // First, try environment variable, then fall back to sessionStorage.
-    const apiKey = process.env.API_KEY || sessionStorage.getItem('gemini_api_key');
+    // The window.aistudio flow populates process.env.API_KEY.
+    const apiKey = process.env.API_KEY;
     if (!apiKey) {
         // This error will be caught by the calling function's try/catch block.
-        throw new Error("API key is missing. Please set the API_KEY environment variable or enter it in the app.");
+        throw new Error("API key not found. Please select your API key in the application.");
     }
     return new GoogleGenAI({ apiKey });
 };

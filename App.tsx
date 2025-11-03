@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { IndustrySelector } from './components/IndustrySelector';
 import { PostCard } from './components/PostCard';
@@ -7,6 +7,40 @@ import { fetchTopNews } from './services/newsService';
 import { generateViralContent } from './services/geminiService';
 import { GeneratedPost } from './types';
 import { INDUSTRIES } from './constants';
+import { KeyIcon } from './components/IconComponents';
+
+// A dedicated component for the API Key selection screen
+const ApiKeySelectionScreen: React.FC<{ onSelectKey: () => void; error?: string | null }> = ({ onSelectKey, error }) => (
+  <div className="min-h-screen bg-slate-900 text-slate-200 font-sans flex flex-col">
+    <Header />
+    <main className="flex-grow flex items-center justify-center p-4">
+      <div className="max-w-md w-full text-center bg-slate-800/50 rounded-2xl shadow-lg p-8 backdrop-blur-sm border border-slate-700">
+        <KeyIcon className="w-16 h-16 text-sky-400 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-white mb-2">API Key Required</h2>
+        <p className="text-slate-400 mb-6">
+          To use advanced features like image generation, you need to select a Google AI API key for this session.
+        </p>
+        {error && (
+            <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg mb-4 text-left" role="alert">
+              <strong className="font-bold">Error: </strong>
+              <span className="block sm:inline">{error}</span>
+            </div>
+        )}
+        <button
+          onClick={onSelectKey}
+          className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-sky-400/30 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-slate-800"
+        >
+          Select Your API Key
+        </button>
+         <p className="text-xs text-slate-500 mt-4">
+          This project uses Google AI models. Ensure your key is enabled and has billing configured. 
+          <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="underline hover:text-sky-400"> Learn more about billing</a>.
+        </p>
+      </div>
+    </main>
+  </div>
+);
+
 
 const App: React.FC = () => {
   const [selectedIndustry, setSelectedIndustry] = useState<string>(INDUSTRIES[0]);
@@ -14,13 +48,48 @@ const App: React.FC = () => {
   const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [generatedPosts, setGeneratedPosts] = useState<GeneratedPost[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [apiKeyNeeded, setApiKeyNeeded] = useState<boolean>(false);
-  const [apiKeyInput, setApiKeyInput] = useState<string>('');
+  const [isKeyReady, setIsKeyReady] = useState(false);
 
+  const checkApiKey = useCallback(async () => {
+    try {
+      // @ts-ignore
+      const hasKey = await window.aistudio.hasSelectedApiKey();
+      setIsKeyReady(hasKey);
+      return hasKey;
+    } catch (e) {
+      console.error("aistudio API not available.", e);
+      setIsKeyReady(false); // Fallback if aistudio is not present
+      return false;
+    }
+  }, []);
+
+  useEffect(() => {
+    checkApiKey();
+  }, [checkApiKey]);
+
+  const handleSelectKey = async () => {
+    try {
+      // @ts-ignore
+      await window.aistudio.openSelectKey();
+      // Optimistically assume success to provide a smoother UX
+      // The check on generate will confirm validity.
+      setIsKeyReady(true);
+      setError(null);
+    } catch (e) {
+      console.error("Failed to open key selection.", e);
+      setError("Could not open the API key selection dialog.");
+    }
+  };
+  
   const handleGenerateClick = useCallback(async () => {
+    if (!(await checkApiKey())) {
+      setError("Please select your API key before generating posts.");
+      setIsKeyReady(false);
+      return;
+    }
+  
     setIsLoading(true);
     setError(null);
-    setApiKeyNeeded(false);
     setGeneratedPosts([]);
 
     try {
@@ -40,24 +109,22 @@ const App: React.FC = () => {
     } catch (err) {
       console.error(err);
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-      setError(errorMessage);
-      if (errorMessage.includes("API key is missing")) {
-        setApiKeyNeeded(true);
+      // Catch key-related errors specifically
+      if (errorMessage.includes("API key") || errorMessage.includes("Requested entity was not found")) {
+        setError("Your API key appears to be invalid or missing required permissions. Please select your key again.");
+        setIsKeyReady(false); // Reset state to show the selection screen
+      } else {
+        setError(errorMessage);
       }
     } finally {
       setIsLoading(false);
       setLoadingMessage('');
     }
-  }, [selectedIndustry]);
-
-  const handleApiKeySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (apiKeyInput.trim()) {
-      sessionStorage.setItem('gemini_api_key', apiKeyInput.trim());
-      setApiKeyInput('');
-      handleGenerateClick(); // Retry generation
-    }
-  };
+  }, [selectedIndustry, checkApiKey]);
+  
+  if (!isKeyReady) {
+    return <ApiKeySelectionScreen onSelectKey={handleSelectKey} error={error} />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200 font-sans">
@@ -87,24 +154,6 @@ const App: React.FC = () => {
             <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg" role="alert">
               <strong className="font-bold">Error: </strong>
               <span className="block sm:inline">{error}</span>
-              {apiKeyNeeded && (
-                <div className="mt-4">
-                  <p className="text-sm mb-2">You can get a free API key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-red-100">Google AI Studio</a>.</p>
-                  <form onSubmit={handleApiKeySubmit} className="flex flex-col sm:flex-row gap-2 justify-center">
-                    <input
-                      type="password"
-                      value={apiKeyInput}
-                      onChange={(e) => setApiKeyInput(e.target.value)}
-                      placeholder="Enter your Gemini API Key"
-                      className="w-full sm:w-auto flex-grow bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500"
-                      aria-label="Gemini API Key"
-                    />
-                    <button type="submit" className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors">
-                      Save Key & Retry
-                    </button>
-                  </form>
-                </div>
-              )}
             </div>
           )}
         </div>
