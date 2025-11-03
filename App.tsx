@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { Header } from './components/Header';
 import { IndustrySelector } from './components/IndustrySelector';
@@ -15,10 +14,13 @@ const App: React.FC = () => {
   const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [generatedPosts, setGeneratedPosts] = useState<GeneratedPost[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [apiKeyNeeded, setApiKeyNeeded] = useState<boolean>(false);
+  const [apiKeyInput, setApiKeyInput] = useState<string>('');
 
   const handleGenerateClick = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    setApiKeyNeeded(false);
     setGeneratedPosts([]);
 
     try {
@@ -37,12 +39,25 @@ const App: React.FC = () => {
       
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      setError(errorMessage);
+      if (errorMessage.includes("API key is missing")) {
+        setApiKeyNeeded(true);
+      }
     } finally {
       setIsLoading(false);
       setLoadingMessage('');
     }
   }, [selectedIndustry]);
+
+  const handleApiKeySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (apiKeyInput.trim()) {
+      sessionStorage.setItem('gemini_api_key', apiKeyInput.trim());
+      setApiKeyInput('');
+      handleGenerateClick(); // Retry generation
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200 font-sans">
@@ -69,9 +84,27 @@ const App: React.FC = () => {
           </div>
 
           {error && (
-            <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-center" role="alert">
+            <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg" role="alert">
               <strong className="font-bold">Error: </strong>
               <span className="block sm:inline">{error}</span>
+              {apiKeyNeeded && (
+                <div className="mt-4">
+                  <p className="text-sm mb-2">You can get a free API key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-red-100">Google AI Studio</a>.</p>
+                  <form onSubmit={handleApiKeySubmit} className="flex flex-col sm:flex-row gap-2 justify-center">
+                    <input
+                      type="password"
+                      value={apiKeyInput}
+                      onChange={(e) => setApiKeyInput(e.target.value)}
+                      placeholder="Enter your Gemini API Key"
+                      className="w-full sm:w-auto flex-grow bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500"
+                      aria-label="Gemini API Key"
+                    />
+                    <button type="submit" className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors">
+                      Save Key & Retry
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
           )}
         </div>
