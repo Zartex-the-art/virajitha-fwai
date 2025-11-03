@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { ZapIcon } from './IconComponents';
+import { ZapIcon } from './IconComponents.tsx';
 
 export const Header: React.FC = () => {
   return (

@@ -1,7 +1,6 @@
-
 import React from 'react';
-import { INDUSTRIES } from '../constants';
-import { BriefcaseIcon } from './IconComponents';
+import { INDUSTRIES } from '../constants.ts';
+import { BriefcaseIcon } from './IconComponents.tsx';
 
 interface IndustrySelectorProps {
   selectedIndustry: string;

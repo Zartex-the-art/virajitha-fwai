@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
-import { GeneratedPost } from '../types';
-import { CopyIcon, CheckIcon } from './IconComponents';
+import { GeneratedPost } from '../types.ts';
+import { CopyIcon, CheckIcon } from './IconComponents.tsx';
 
 interface PostCardProps {
   post: GeneratedPost;

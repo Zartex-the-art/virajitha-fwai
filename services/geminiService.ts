@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { Article, GeneratedPost } from '../types';
+import { Article, GeneratedPost } from '../types.ts';
 
 interface ContentIdea {
     idea: string;

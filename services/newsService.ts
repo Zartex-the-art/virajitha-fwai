@@ -1,5 +1,4 @@
-
-import { Article } from '../types';
+import { Article } from '../types.ts';
 
 // Mock data for different industries
 const mockNewsData: { [key: string]: Article[] } = {

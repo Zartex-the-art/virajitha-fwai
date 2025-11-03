@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Header } from './components/Header';
-import { IndustrySelector } from './components/IndustrySelector';
-import { PostCard } from './components/PostCard';
-import { Loader } from './components/Loader';
-import { fetchTopNews } from './services/newsService';
-import { generateViralContent } from './services/geminiService';
-import { GeneratedPost } from './types';
-import { INDUSTRIES } from './constants';
-import { KeyIcon } from './components/IconComponents';
+import { Header } from './components/Header.tsx';
+import { IndustrySelector } from './components/IndustrySelector.tsx';
+import { PostCard } from './components/PostCard.tsx';
+import { Loader } from './components/Loader.tsx';
+import { fetchTopNews } from './services/newsService.ts';
+import { generateViralContent } from './services/geminiService.ts';
+import { GeneratedPost } from './types.ts';
+import { INDUSTRIES } from './constants.ts';
+import { KeyIcon } from './components/IconComponents.tsx';
 
 // A dedicated component for the API Key selection screen
 const ApiKeySelectionScreen: React.FC<{ onSelectKey: () => void; error?: string | null }> = ({ onSelectKey, error }) => (
