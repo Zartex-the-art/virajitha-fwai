@@ -1,14 +1,23 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Article, GeneratedPost } from '../types';
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
 interface ContentIdea {
     idea: string;
     caption: string;
     imagePrompt: string;
 }
+
+// Helper function to get the AI client.
+// This lazy-initializes the client and provides a clear error if the key is missing.
+const getAiClient = () => {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+        // This error will be caught by the calling function's try/catch block.
+        throw new Error("API key is missing. Please make sure the API_KEY environment variable is set in your deployment settings.");
+    }
+    return new GoogleGenAI({ apiKey });
+};
+
 
 /**
  * Generates viral post ideas, captions, and images based on news articles.
@@ -39,11 +48,13 @@ export const generateViralContent = async (articles: Article[], industry: string
 
     } catch (error) {
         console.error("Error in generateViralContent:", error);
-        throw new Error("Failed to generate content from AI. Check your API key and network connection.");
+        // Re-throw the original error to allow the UI to display a specific message
+        throw error;
     }
 };
 
 const generateIdeasAndCaptions = async (articles: Article[], industry: string): Promise<ContentIdea[]> => {
+    const ai = getAiClient();
     const articlesString = articles.map(a => `- ${a.title}: ${a.description}`).join('\n');
     
     const prompt = `
@@ -93,6 +104,7 @@ const generateIdeasAndCaptions = async (articles: Article[], industry: string): 
 };
 
 const generateImageForIdea = async (prompt: string): Promise<string> => {
+    const ai = getAiClient();
     const response = await ai.models.generateImages({
         model: 'imagen-4.0-generate-001',
         prompt: prompt,
