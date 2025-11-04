@@ -1,10 +1,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
+let userApiKey = null;
+
+export const setApiKey = (key) => {
+    userApiKey = key;
+};
+
 // Helper function to get the AI client.
 const getAiClient = () => {
-    const apiKey = process.env.API_KEY;
+    // Use user-provided key first, fallback to environment variable for AI Studio.
+    const apiKey = userApiKey || process.env.API_KEY;
     if (!apiKey) {
-        throw new Error("API key not found. Please select your API key in the application.");
+        throw new Error("API key not found. Please provide your API key.");
     }
     return new GoogleGenAI({ apiKey });
 };

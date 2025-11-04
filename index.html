@@ -43,9 +43,16 @@
             <div class="max-w-md w-full text-center bg-slate-800/50 rounded-2xl shadow-lg p-8 backdrop-blur-sm border border-slate-700">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 text-sky-400 mx-auto mb-4"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"></path></svg>
                 <h2 class="text-2xl font-bold text-white mb-2">API Key Required</h2>
-                <p class="text-slate-400 mb-6">To use advanced features like image generation, you need to select a Google AI API key for this session.</p>
+                <p id="api-key-prompt-message" class="text-slate-400 mb-6">To use advanced features like image generation, you need to select a Google AI API key for this session.</p>
                 <div id="api-key-error" class="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg mb-4 text-left hidden" role="alert"></div>
+                
                 <button id="select-key-btn" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-sky-400/30 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-slate-800">Select Your API Key</button>
+                
+                <div id="manual-key-entry" class="hidden flex flex-col gap-4">
+                    <input type="password" id="api-key-input" placeholder="Enter your Google AI API Key" class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-sky-500" aria-label="API Key Input">
+                    <button id="set-key-btn" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-sky-400/30 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-slate-800">Set API Key & Continue</button>
+                </div>
+
                 <p class="text-xs text-slate-500 mt-4">This project uses Google AI models. Ensure your key is enabled and has billing configured. <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" class="underline hover:text-sky-400"> Learn more about billing</a>.</p>
             </div>
         </main>

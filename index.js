@@ -1,4 +1,4 @@
-import { generateViralContent } from './services/geminiService.js';
+import { generateViralContent, setApiKey } from './services/geminiService.js';
 import { fetchTopNews } from './services/newsService.js';
 
 const INDUSTRIES = ['Healthcare', 'Technology', 'Finance', 'Renewable Energy', 'E-commerce'];
@@ -8,6 +8,10 @@ const apiKeyScreen = document.getElementById('api-key-screen');
 const appScreen = document.getElementById('app-screen');
 const selectKeyBtn = document.getElementById('select-key-btn');
 const apiKeyError = document.getElementById('api-key-error');
+const apiKeyInput = document.getElementById('api-key-input');
+const setKeyBtn = document.getElementById('set-key-btn');
+const manualKeyEntry = document.getElementById('manual-key-entry');
+const apiKeyPromptMessage = document.getElementById('api-key-prompt-message');
 
 const industrySelector = document.getElementById('industry-selector');
 const generateBtn = document.getElementById('generate-btn');
@@ -19,6 +23,7 @@ const postsGrid = document.getElementById('posts-grid');
 
 // State
 let isKeyReady = false;
+const IS_AISTUDIO_ENVIRONMENT = !!window.aistudio;
 
 // --- UI Functions ---
 const showApiKeyScreen = (error = null) => {
@@ -35,6 +40,7 @@ const showApiKeyScreen = (error = null) => {
 const showAppScreen = () => {
     apiKeyScreen.classList.add('hidden');
     appScreen.classList.remove('hidden');
+    apiKeyError.classList.add('hidden');
 };
 
 const setLoading = (isLoading, message = '') => {
@@ -86,6 +92,7 @@ const createPostCardHTML = (post) => {
 
 // --- API Key Logic ---
 const checkApiKey = async () => {
+    if (!IS_AISTUDIO_ENVIRONMENT) return false;
     try {
         isKeyReady = await window.aistudio.hasSelectedApiKey();
         return isKeyReady;
@@ -107,9 +114,21 @@ const handleSelectKey = async () => {
     }
 };
 
+const handleSetKey = () => {
+    const key = apiKeyInput.value;
+    if (!key.trim()) {
+        displayError('Please enter an API key.', true);
+        return;
+    }
+    setApiKey(key);
+    isKeyReady = true;
+    showAppScreen();
+};
+
+
 // --- App Logic ---
 const handleGenerateClick = async () => {
-    if (!(await checkApiKey())) {
+    if (IS_AISTUDIO_ENVIRONMENT && !(await checkApiKey())) {
         displayError("Please select your API key before generating posts.", true);
         return;
     }
@@ -136,7 +155,11 @@ const handleGenerateClick = async () => {
         console.error(err);
         const errorMessage = err.message || 'An unknown error occurred.';
         if (errorMessage.includes("API key") || errorMessage.includes("Requested entity was not found")) {
-            displayError("Your API key seems invalid. Please select your key again.", true);
+            isKeyReady = false; // Reset key status
+            const keyError = IS_AISTUDIO_ENVIRONMENT
+              ? "Your API key seems invalid. Please select your key again."
+              : "Your API key seems invalid. Please enter a valid key.";
+            displayError(keyError, true);
         } else {
             displayError(errorMessage);
         }
@@ -169,13 +192,22 @@ const init = async () => {
 
     // Add event listeners
     selectKeyBtn.addEventListener('click', handleSelectKey);
+    setKeyBtn.addEventListener('click', handleSetKey);
     generateBtn.addEventListener('click', handleGenerateClick);
     postsGrid.addEventListener('click', handleCopyClick);
     
     // Check for API key and show appropriate screen
-    if (await checkApiKey()) {
-        showAppScreen();
+    if (IS_AISTUDIO_ENVIRONMENT) {
+        if (await checkApiKey()) {
+            showAppScreen();
+        } else {
+            showApiKeyScreen();
+        }
     } else {
+        // Not in AI Studio, show manual key entry
+        selectKeyBtn.classList.add('hidden');
+        manualKeyEntry.classList.remove('hidden');
+        apiKeyPromptMessage.textContent = 'To use this application, please enter your Google AI API key below. Your key is not stored.';
         showApiKeyScreen();
     }
 };
